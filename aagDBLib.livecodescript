@@ -75,7 +75,7 @@ end dbSetDefaultConnectionConfiguration
 # Sets the default _Database Connection ID_ for the calls.
 # *Parameter:* You pass the connection id number.
 on dbSetDefaultConnectionID pID
-    put pID into dbID
+   put pID into dbID
 end dbSetDefaultConnectionID
 
 # Escapes a string for SQLite usage.
@@ -94,7 +94,7 @@ end dbEscapeSqlite
 # *Returns:* The escaped and quoted string.
 # _This escaping routine is here because it might be needed but it is not currently used_
 private function q pText
-    return "'" & dbEscapeSqlite(pText) & "'"
+   return "'" & dbEscapeSqlite(pText) & "'"
 end q
 
 # This function returns the last SQL executed by dbGet, dbInsert, dbUpdate and dbDelete
@@ -103,13 +103,15 @@ function dbLastSQL
 end dbLastSQL
 
 private function placeholder pValue
+   local tCurrentPlaceholder
+   
    if pValue is "NULL" then
       return "NULL"
    end if
    if the keys of dbA["placeholders"] is empty then
       put 1 into dbA["next placeholder"]
    end if
-
+   
    put dbA["next placeholder"] into tCurrentPlaceholder
    put pValue into dbA["placeholders"][tCurrentPlaceholder]
    add 1 to dbA["next placeholder"]
@@ -121,7 +123,7 @@ end placeholder
 # By default, database queries include all columns. This behavior can be changed with this command.
 # *Parameters: a comma separated list of columns
 command dbColumns pColumns
-    put pColumns into dbA["columns"]
+   put pColumns into dbA["columns"]
 end dbColumns
 
 # This clears the current query. As you use commands such as _dbColumns, dbWhere, dbLimit_,
@@ -205,27 +207,28 @@ end dbRestoreQueryParameters
 #     dbWhere "country", "NOT NULL"
 #
 command dbWhere pColumn, pValue, pConcatenationOperator
+   local tOperator
    if the number of words in pColumn > 1 then
       put word 2 of pColumn into tOperator
       put word 1 of pColumn into pColumn
    else
       put "=" into tOperator
    end if
-
+   
    if pValue is "null" then
       put "IS" into tOperator
       put "NULL" into pValue
    end if
-
+   
    if pValue is "not null" then
       put "IS NOT" into tOperator
       put "NULL" into pValue
    end if
-
+   
    if pConcatenationOperator is empty then
       put "AND" into pConcatenationOperator
    end if
-
+   
    if dbA["where columns"][pColumn] is empty then
       if dbA["where"] is empty then
          put "WHERE" && pColumn && tOperator && placeholder(pValue) before dbA["where"]
@@ -237,7 +240,7 @@ command dbWhere pColumn, pValue, pConcatenationOperator
       --       replace dbA["where columns"][pColumn] with (pColumn && tOperator && placeholder(pValue)) in dbA["where"]
       put " " & pConcatenationOperator  && pColumn && tOperator && placeholder(pValue) after dbA["where"]
    end if
-
+   
    set the itemdel to space
    put item -3 to -1 of dbA["where"]  into dbA["where columns"][pColumn]
 end dbWhere
@@ -284,23 +287,25 @@ end dbWhere
 #
 #     SELECT * FROM contacts WHERE country IN('Brazil', 'US', 'France') or country IN('Germany','Argentina')
 #
-command dbIn pColumn
+command dbIn pColumn, pValue, pConcatenationOperator
+   local tParamCount
+   local tOperator
+   
    put the paramcount into tParamCount
    put param(tParamCount) into pConcatenationOperator
-
+   
    if pConcatenationOperator is not among the items of "AND,OR" then
       put empty into pConcatenationOperator
    else
       subtract 1 from tParamCount
    end if
-
+   
    if pConcatenationOperator is empty then
       put "AND" into pConcatenationOperator
    end if
-
+   
    put "IN" into tOperator
-
-
+   
    if dbA["where columns"][pColumn] is empty then
       if dbA["where"] is empty then
          put "WHERE" && pColumn && "IN("  before dbA["where"]
@@ -315,7 +320,7 @@ command dbIn pColumn
    else
       replace dbA["where columns"][pColumn] with (pColumn && tOperator && placeholder(pValue)) in dbA["where"]
    end if
-
+   
    set the itemdel to space
    put item -3 to -1 of dbA["where"]  into dbA["where columns"][pColumn]
 end dbIn
@@ -362,23 +367,25 @@ end dbIn
 #
 #     SELECT * FROM contacts WHERE country NOT IN('Brazil', 'US', 'France') or country NOT IN('Germany','Argentina')
 #
-command dbNotIn pColumn
+command dbNotIn pColumn, pConcatenationOperator
+   local tParamCount
+   local tOperator
+   
    put the paramcount into tParamCount
    put param(tParamCount) into pConcatenationOperator
-
+   
    if pConcatenationOperator is not among the items of "AND,OR" then
       put empty into pConcatenationOperator
    else
       subtract 1 from tParamCount
    end if
-
+   
    if pConcatenationOperator is empty then
       put "AND" into pConcatenationOperator
    end if
-
+   
    put "NOT IN" into tOperator
-
-
+   
    if dbA["where"] is empty then
       put "WHERE" && pColumn && "NOT IN("  before dbA["where"]
    else
@@ -389,7 +396,7 @@ command dbNotIn pColumn
    end repeat
    delete char -1 of dbA["where"]
    put ")" after dbA["where"]
-
+   
    set the itemdel to space
    put item -3 to -1 of dbA["where"]  into dbA["where columns"][pColumn]
 end dbNotIn
@@ -523,6 +530,8 @@ end dbCloseParenthesis
 # Can also pass the matching operator and the concatenation operator.
 #
 command dbLike pColumn, pValue, pMatch, pConcatenationOperator
+   local tOperator
+   
    switch pMatch
       case "before"
          put "%" before pValue
@@ -537,13 +546,13 @@ command dbLike pColumn, pValue, pMatch, pConcatenationOperator
          put "%" after pValue
          break
    end switch
-
+   
    if pConcatenationOperator is empty then
       put "AND" into pConcatenationOperator
    end if
-
+   
    put "LIKE" into tOperator
-
+   
    if dbA["where columns"][pColumn] is empty then
       if dbA["where"] is empty then
          put "WHERE" && pColumn && tOperator && placeholder(pValue) before dbA["where"]
@@ -555,7 +564,7 @@ command dbLike pColumn, pValue, pMatch, pConcatenationOperator
       --       replace dbA["where columns"][pColumn] with (pColumn && tOperator && placeholder(pValue)) in dbA["where"]
       put " " & pConcatenationOperator  && pColumn && tOperator && placeholder(pValue) after dbA["where"]
    end if
-
+   
    set the itemdel to space
    put item -3 to -1 of dbA["where"]  into dbA["where columns"][pColumn]
 end dbLike
@@ -587,21 +596,23 @@ end dbSetSQL
 # *Parameters:* A SQL Statement.
 # *Parameters:* A SQL Statement and a connection id.
 #
-command dbExecuteSQL pSQL, pDatabaseConnection
+command dbExecuteSQL pSQL, pDatabaseConnectionID
+   local theError
+   
    if pDatabaseConnectionID is empty then
       if dbId is not empty then
-         put dbId into pDatabaseConnection
+         put dbId into pDatabaseConnectionID
       else
-         put dbConfigA into pDatabaseConnection
+         put dbConfigA into pDatabaseConnectionID
       end if
    end if
-
-   if pDatabaseConnection is a number then
-      revExecuteSQL pDatabaseConnection, pSQL
+   
+   if pDatabaseConnectionID is a number then
+      revExecuteSQL pDatabaseConnectionID, pSQL
    else
-      dbRemoteExecuteSQL pDatabaseConnection, pSQL
+      dbRemoteExecuteSQL pDatabaseConnectionID, pSQL
    end if
-
+   
    put the result into theError
    put empty into dbA
    return theError
@@ -667,10 +678,15 @@ end dbGroupBy
 # *Parameters:* A table name and a connection id.
 #
 function dbGet pTable, pDatabaseConnection
+   local theArray
+   local tPlaceholdersA
+   local theCursor
+   local theError
+   
    if pDatabaseConnection is empty then
       if dbID is a number then
          put dbID into pDatabaseConnection
-     else
+      else
          put dbConfigA into pDatabaseConnection
       end if
    end if
@@ -690,7 +706,7 @@ function dbGet pTable, pDatabaseConnection
       if theCursor is an integer then
          ConvertSQLCursorToArray theCursor, theArray
          put the result into theError
-
+         
          if theError is empty then
             revCloseCursor theCursor
             return theArray
@@ -710,7 +726,7 @@ function dbGet pTable, pDatabaseConnection
       end if
       put dbA["placeholders"] into tPlaceholdersA
       put dbA["sql"] into dbData["last sql"]
-      put dbRemoteQueryDatabase( pDatabaseConnectionA, pTable, dbA["sql"], tPlaceholdersA) into theArray
+      put dbRemoteQueryDatabase( pDatabaseConnection, pTable, dbA["sql"], tPlaceholdersA) into theArray
       put empty into dbA
       return theArray
    end if
@@ -718,47 +734,52 @@ end dbGet
 
 # This command came from a RunRev lesson.
 private command ConvertSQLCursorToArray pCursor, @pOutArrayA
-    local i
-    local theFields
-    local theError
-
-    ## Get the names of all the columns in the database cursor
-    put revDatabaseColumnNames(pCursor) into theFields
-    if theFields begins with "revdberr," then
-        put item 2 to -1 of theFields into theError
-    end if
-
-    if theError is empty then
-        put 0 into i
-        ## Loop through all rows in cursor
-        repeat until revQueryIsAtEnd(pCursor)
-            add 1 to i
-
-            ## Move all fields in row into next dimension of the array
-            repeat for each item theField in theFields
-               put textdecode(revDatabaseColumnNamed(pCursor, theField), "UTF8") into pOutArrayA[i][ theField ]
-
-            end repeat
-
-            revMoveToNextRecord pCursor
-        end repeat
-    end if
-
-    return theError
-
+   local i
+   local theFields
+   local theError
+   
+   ## Get the names of all the columns in the database cursor
+   put revDatabaseColumnNames(pCursor) into theFields
+   if theFields begins with "revdberr," then
+      put item 2 to -1 of theFields into theError
+   end if
+   
+   if theError is empty then
+      put 0 into i
+      ## Loop through all rows in cursor
+      repeat until revQueryIsAtEnd(pCursor)
+         add 1 to i
+         
+         ## Move all fields in row into next dimension of the array
+         repeat for each item theField in theFields
+            put textdecode(revDatabaseColumnNamed(pCursor, theField), "UTF8") into pOutArrayA[i][ theField ]
+            
+         end repeat
+         
+         revMoveToNextRecord pCursor
+      end repeat
+   end if
+   
+   return theError
+   
 end ConvertSQLCursorToArray
 
 
 # nodoc
 private function arrayToFieldNames pA
-    put the keys of pA into tKeys
-    sort tKeys
-    replace cr with ", "  in tKeys
-    return tKeys
+   local tKeys
+   
+   put the keys of pA into tKeys
+   sort tKeys
+   replace cr with ", "  in tKeys
+   return tKeys
 end arrayToFieldNames
 
 # nodoc
 private function arrayToFieldValues pA
+   local tKeys
+   local tBuf
+   
    put the keys of pA into tKeys
    sort tKeys
    repeat for each line tK in tKeys
@@ -774,6 +795,8 @@ end arrayToFieldValues
 # *Parameters:* A table name.
 #
 function dbLastRowid pTable
+   local tA
+   
    dbSetSQL "SELECT ROWID from" && pTable && "order by ROWID DESC limit 1"
    put dbGet() into tA
    return tA[1]["rowid"]
@@ -807,10 +830,13 @@ end dbGetDefaultConnectionConfiguration
 # *Returns:* the result from the inner revExecuteSQL call.
 #
 function dbInsert pTable, pDataA, pDatabaseConnection
+   local tPlaceholdersA
+   local theError
+   
    if pDatabaseConnection is empty then
       if dbID is a number then
          put dbID into pDatabaseConnection
-     else
+      else
          put dbConfigA into pDatabaseConnection
       end if
    end if
@@ -849,14 +875,18 @@ end dbInsert
 # The return value is the number of records added or an error string that starts with __dberr,__.
 #
 function dbBatchInsert pTable, pBatchDataA, pDatabaseConnection
+   local tKeys
+   local tDataA
+   local tTotal
+   
    if pDatabaseConnection is empty then
       if dbID is a number then
          put dbID into pDatabaseConnection
-     else
+      else
          put dbConfigA into pDatabaseConnection
       end if
    end if
-
+   
    put the keys of pBatchDataA into tKeys
    sort numeric ascending tKeys
    repeat for each line x in tKeys
@@ -872,6 +902,9 @@ end dbBatchInsert
 
 # nodoc
 private function arrayToUpdateSQL pA
+   local tKeys
+   local tBuf
+   
    put the keys of pA into tKeys
    sort tKeys
    repeat for each line tK in tKeys
@@ -906,10 +939,13 @@ end arrayToUpdateSQL
 # *Returns:* the result from the inner revExecuteSQL call.
 #
 function dbUpdate pTable, pDataA, pDatabaseConnection
+   local tPlaceholdersA
+   local theError
+   
    if pDatabaseConnection is empty then
       if dbID is a number then
          put dbID into pDatabaseConnection
-     else
+      else
          put dbConfigA into pDatabaseConnection
       end if
    end if
@@ -924,7 +960,7 @@ function dbUpdate pTable, pDataA, pDatabaseConnection
    if pDatabaseConnection is a number then
       revExecuteSQL pDatabaseConnection, dbA["sql"], "tPlaceholdersA"
    else
-      dbRemoteExecuteSQL pDatabaseConnectionA, pTable, dbA["sql"], tPlaceholdersA
+      dbRemoteExecuteSQL pDatabaseConnection, pTable, dbA["sql"], tPlaceholdersA
    end if
    put the result into theError
    put empty into dbA
@@ -955,10 +991,13 @@ end dbUpdate
 # *Returns:* the result from the inner revExecuteSQL call.
 #
 function dbDelete pTable, pDatabaseConnection
+   local tPlaceholdersA
+   local theError
+   
    if pDatabaseConnection is empty then
       if dbID is a number then
          put dbID into pDatabaseConnection
-     else
+      else
          put dbConfigA into pDatabaseConnection
       end if
    end if
@@ -973,7 +1012,7 @@ function dbDelete pTable, pDatabaseConnection
    if pDatabaseConnection is a number then
       revExecuteSQL pDatabaseConnection, dbA["sql"], "tPlaceholdersA"
    else
-      dbRemoteExecuteSQL pDatabaseConnectionA, pTable, dbA["sql"], tPlaceholdersA
+      dbRemoteExecuteSQL pDatabaseConnection, pTable, dbA["sql"], tPlaceholdersA
    end if
    put the result into theError
    put empty into dbA
@@ -1008,6 +1047,9 @@ end dbDelete
 #
 # *Returns:* an array
 function dbCardToArray pTable, pDatabaseConnectionID
+   local tDataA
+   local tFields
+   
    if pDatabaseConnectionID is empty then
       put dbID into pDatabaseConnectionID
    end if
@@ -1060,6 +1102,8 @@ end dbCardToArray
 # *Parameters:* an array and a connection id.
 #
 command dbArrayToCard pDataA
+   local tDataA
+   
    repeat for each key tK in pDataA
       -- check for field
       if there is a field tK then
@@ -1082,6 +1126,8 @@ end dbArrayToCard
 
 # nodoc
 private function arrayToPlainText pA, pIndent
+   local tBuf
+   
    repeat for each key tK in pA
       if the keys of pA[tK] is empty then
          put pIndent & tK & ":" && pA[tK] & cr after tBuf
@@ -1105,19 +1151,22 @@ end arrayToPlainText
 # variable for errors starting with _dberr_.
 #
 command dbCreateNewSQLiteFile pLocation, pInitialSQL
+   local tQuery
+   local tID
+   
    -- check if file exists
    if there is a file pLocation then
       return "dberr, file already exists"
    end if
-
+   
    -- create new file
    put empty into url ("binfile:" & pLocation)
-
+   
    -- if there is some initial SQL then execute it.
    if pInitialSQL is not empty then
       put dbPreserveQueryParameters() into tQuery
       dbResetQuery
-
+      
       -- opening new db file
       get revOpenDatabase("sqlite", pLocation,,,)
       if it is not a number then
@@ -1126,16 +1175,16 @@ command dbCreateNewSQLiteFile pLocation, pInitialSQL
       else
          put it into tID
       end if
-
+      
       -- executing SQL
       dbExecuteSQL pInitialSQL, tID
       dbRestoreQueryParameters tQuery
       return the result
-
+      
    end if
-
+   
    dbRestoreQueryParameters tQuery
-
+   
 end dbCreateNewSQLiteFile
 
 # This command will copy the SQLite files from the engines folder to the documents.
@@ -1162,20 +1211,25 @@ end dbCreateNewSQLiteFile
 # overwrite it.
 #
 command dbMoveAllSQLiteFilesFromEngineToDocuments pExtension
+   local tDF
+   local tFilesList
+   local tEngineLocation
+   local tDocumentsLocation
+   
    if the environment is not "mobile" then
       return "dberr, this command only works on mobile."
    end if
    put the defaultfolder into tDF
    set the defaultfolder to the engine folder
-
+   
    put the files into tFilesList
-
+   
    if pExtension is empty then
       put ".sqlite" into pExtension
    end if
-
+   
    filter tFilesList with ("*" & pExtension & "*")
-
+   
    repeat for each line f in tFilesList
       put the defaultfolder & "/" & f into tEngineLocation
       put the documents folder & "/" & f into tDocumentsLocation
@@ -1188,7 +1242,7 @@ command dbMoveAllSQLiteFilesFromEngineToDocuments pExtension
          return "dberr," && the result
       end if
    end repeat
-
+   
    set the defaultfolder to tDF
 end dbMoveAllSQLiteFilesFromEngineToDocuments
 
@@ -1200,30 +1254,37 @@ end dbMoveAllSQLiteFilesFromEngineToDocuments
 # - the SQL
 #
 # Returns an error or an array.
-on  dbRemoteExecuteSQL pDatabaseConnectionA, pTable, pSQL, pPlaceholdersA
+on dbRemoteExecuteSQL pDatabaseConnectionA, pTable, pSQL, pPlaceholdersA
+   local tDataA
+   local tA
+   local tValue
+   local tFlatData
+   local tRetVal
+   local tRetValA
+   
    if pDatabaseConnectionA["user"] is not empty then
       put pDatabaseConnectionA["user"] into tDataA["user"]
    end if
-
+   
    if pDatabaseConnectionA["password"] is not empty then
       put pDatabaseConnectionA["password"] into tDataA["password"]
    end if
-
+   
    if pDatabaseConnectionA["database"] is not empty then
       put pDatabaseConnectionA["database"] into tDataA["db"]
    end if
-
+   
    put pTable into tDataA["table"]
-
+   
    if pPlaceholdersA is an array then
       if kREPLACE_PLACEHOLDERS is false then
          repeat for each key k in pPlaceholdersA
             put pPlaceholdersA[k] into tA["key" & k]
             replace ":" & k with ":key" & k in pSQL
          end repeat
-
+         
          put tA into tDataA["placeholders"]
-
+         
       else
          repeat for each key k in pPlaceholdersA
             put pPlaceholdersA[k] into tValue
@@ -1235,29 +1296,29 @@ on  dbRemoteExecuteSQL pDatabaseConnectionA, pTable, pSQL, pPlaceholdersA
          end repeat
       end if
    end if
-
-
+   
+   
    if pDatabaseConnectionA["cipher"] is empty then
       put "aes-256-ctr" into pDatabaseConnectionA["cipher"]
    end if
-
+   
    if pDatabaseConnectionA["encryption_key"] is empty then
       put "FFFFFFFFFFFFDDCCFFFFFFFFFFFFDDCC" into pDatabaseConnectionA["encryption_key"]
    end if
-
+   
    put "execute" into tDataA["type"]
-
+   
    put pSQL into tDataA["sql"]
    put jsonexport(tDataA) into tFlatData
-
+   
    encrypt tFlatData using pDatabaseConnectionA["cipher"] with key pDatabaseConnectionA["encryption_key"]
    if the result is not empty then
       return "dbliberr: problem with encryption:" && the result
    end if
-
+   
    --    get line -1 of it
    put base64encode(it) into tFlatData
-
+   
    post tFlatData to url pDatabaseConnectionA["url"]
    if the result is not empty then
       return "dbliberr:" && the result
@@ -1278,27 +1339,34 @@ end dbRemoteExecuteSQL
 #
 # Returns an error or an array.
 function  dbRemoteQueryDatabase pDatabaseConnectionA, pTable, pSQL, pPlaceholdersA
+   local tDataA
+   local tA
+   local tValue
+   local tFlatData
+   local tRetVal
+   local tRetValA
+   
    if pDatabaseConnectionA["user"] is not empty then
       put pDatabaseConnectionA["user"] into tDataA["user"]
    end if
-
+   
    if pDatabaseConnectionA["password"] is not empty then
       put pDatabaseConnectionA["password"] into tDataA["password"]
    end if
-
+   
    if pDatabaseConnectionA["database"] is not empty then
       put pDatabaseConnectionA["database"] into tDataA["db"]
    end if
-
+   
    put pTable into tDataA["table"]
-
+   
    if pPlaceholdersA is an array then
       if kREPLACE_PLACEHOLDERS is false then
          repeat for each key k in pPlaceholdersA
             put pPlaceholdersA[k] into tA["key" & k]
             replace ":" & k with ":key" & k in pSQL
          end repeat
-
+         
          put tA into tDataA["placeholders"]
       else
          repeat for each key k in pPlaceholdersA
@@ -1311,27 +1379,27 @@ function  dbRemoteQueryDatabase pDatabaseConnectionA, pTable, pSQL, pPlaceholder
          end repeat
       end if
    end if
-
+   
    if pDatabaseConnectionA["cipher"] is empty then
       put "aes-256-ctr" into pDatabaseConnectionA["cipher"]
    end if
-
+   
    if pDatabaseConnectionA["encryption_key"] is empty then
       put "FFFFFFFFFFFFDDCCFFFFFFFFFFFFDDCC" into pDatabaseConnectionA["encryption_key"]
    end if
-
+   
    put "query" into tDataA["type"]
-
+   
    put pSQL into tDataA["sql"]
    put jsonexport(tDataA) into tFlatData
-
+   
    encrypt tFlatData using pDatabaseConnectionA["cipher"] with key pDatabaseConnectionA["encryption_key"]
    if the result is not empty then
       return "dbliberr: problem with encryption:" && the result
    end if
-
+   
    put base64encode(it) into tFlatData
-
+   
    post tFlatData to url pDatabaseConnectionA["url"]
    if the result is not empty then
       return "dbliberr:" && the result
