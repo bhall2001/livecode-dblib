@@ -1,4 +1,4 @@
-# DB Lib - bhal2001 version
+# DB Lib - bhall2001 version
 
 # Introduction
 
