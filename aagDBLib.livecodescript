@@ -426,7 +426,7 @@ end dbNotIn
 # This SQL will execute as you expect because you are being clear on how the matches should go.
 # Remember to add the close parenthesis with dbCloseParenthesis as well.
 #
-on dbOpenParenthesis pConcatenationOperator
+command dbOpenParenthesis pConcatenationOperator
    if pConcatenationOperator is empty then
       put "AND" into pConcatenationOperator
    end if
@@ -481,7 +481,7 @@ end dbOpenParenthesis
 # This SQL will execute as you expect because you are being clear on how the matches should go.
 # Remember to add the close parenthesis with dbCloseParenthesis as well.
 #
-on dbCloseParenthesis
+command dbCloseParenthesis
    --BWM - use open parenthesis level to check if call is valid
    if dbA["parenLevel"] > 0 then
       put " ) " after dbA["where"]
