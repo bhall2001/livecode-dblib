@@ -779,8 +779,9 @@ end dbGroupBy
 #
 # *Parameters:* A table name.
 # *Parameters:* A table name and a connection id.
+# *Parameters:* Field name to create an dictionary indexed by the field
 #
-function dbGet pTable, pDatabaseConnection
+function dbGet pTable, pDatabaseConnection, pIndexField
    local theArray
    local tPlaceholdersA
    local theCursor
@@ -807,7 +808,12 @@ function dbGet pTable, pDatabaseConnection
       put revQueryDatabase( pDatabaseConnection, dbA["sql"],"tPlaceholdersA") into theCursor
       put empty into dbA
       if theCursor is an integer then
-         ConvertSQLCursorToArray theCursor, theArray
+         if pIndexField is empty then
+            _ConvertSQLCursorToArray theCursor, theArray
+         else
+            _ConvertSQLCursorToDict theCursor, theArray, pIndexField
+         end if
+         
          put the result into theError
          
          if theError is empty then
@@ -836,7 +842,7 @@ function dbGet pTable, pDatabaseConnection
 end dbGet
 
 # This command came from a RunRev lesson.
-private command ConvertSQLCursorToArray pCursor, @pOutArrayA
+private command _ConvertSQLCursorToArray pCursor, @pOutArrayA
    local i
    local theFields
    local theError
@@ -845,27 +851,62 @@ private command ConvertSQLCursorToArray pCursor, @pOutArrayA
    put revDatabaseColumnNames(pCursor) into theFields
    if theFields begins with "revdberr," then
       put item 2 to -1 of theFields into theError
+      return theError
    end if
    
-   if theError is empty then
-      put 0 into i
-      ## Loop through all rows in cursor
-      repeat until revQueryIsAtEnd(pCursor)
-         add 1 to i
-         
-         ## Move all fields in row into next dimension of the array
-         repeat for each item theField in theFields
-            put textdecode(revDatabaseColumnNamed(pCursor, theField), "UTF8") into pOutArrayA[i][ theField ]
-            
-         end repeat
-         
-         revMoveToNextRecord pCursor
+   put 0 into i
+   ## Loop through all rows in cursor
+   repeat until revQueryIsAtEnd(pCursor)
+      add 1 to i
+      
+      ## Move all fields in row into next dimension of the array
+      repeat for each item theField in theFields
+         put textdecode(revDatabaseColumnNamed(pCursor, theField), "UTF8") into pOutArrayA[i][theField]
       end repeat
+      
+      revMoveToNextRecord pCursor
+   end repeat
+   
+   return empty
+end _ConvertSQLCursorToArray
+
+
+private command _ConvertSQLCursorToDict pCursor, @pOutArrayA, pIndexField
+   local i
+   local tFields
+   local tIndex
+   local tError
+   
+   ## Get the names of all the columns in the database cursor
+   put revDatabaseColumnNames(pCursor) into tFields
+   if tFields begins with "revdberr," then
+      put item 2 to -1 of tFields into tError
+      return tError
    end if
    
-   return theError
+   put 0 into i
+   ## Loop through all rows in cursor
+   repeat until revQueryIsAtEnd(pCursor)
+      add 1 to i
+      
+      // value for field index
+      put textdecode(revDatabaseColumnNamed(pCursor, pIndexField), "UTF8") into tIndex
+      
+      // if there's no value for index, use the loop array
+      if tIndex is empty then
+         put i into tIndex
+      end if
+      
+      ## Move all fields in row into next dimension of the array
+      repeat for each item tField in tFields
+         put textdecode(revDatabaseColumnNamed(pCursor, tField), "UTF8") into pOutArrayA[tIndex][tField]
+      end repeat
+      
+      revMoveToNextRecord pCursor
+   end repeat
    
-end ConvertSQLCursorToArray
+   return empty
+end _ConvertSQLCursorToDict
 
 
 # nodoc
