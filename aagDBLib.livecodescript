@@ -1,4 +1,24 @@
 ﻿script "aagDBLib"
+/*
+ AAG DB LIB BHALL2001 FORK
+
+ This file contains a forked version of the original aag dblib. I have made changes to add
+ functionality and fix bugs in the main library.
+
+ Using this library REQUIRES that you follow the original license agreement. If you intend
+ to not open source your code you must purchase a commercial license of the otiginal author
+#at the link provided below.
+
+ Release Notes
+ 
+ Version 20.2.1
+ - added local variable declarations
+ - fixed bugs with parameters related to remote library
+ - merged Brian M. pull request from original repo
+ - added dbExecute command
+ 
+ */
+ 
 # ## AAG DB LIB
 #
 # Version 4.0
@@ -713,7 +733,7 @@ command dbExecuteSQL pSQL, pDatabaseConnectionID
    if pDatabaseConnectionID is a number then
       revExecuteSQL pDatabaseConnectionID, pSQL
    else
-      dbRemoteExecuteSQL pDatabaseConnectionID, pSQL
+      dbRemoteExecuteSQL pDatabaseConnectionID,,pSQL
    end if
    
    put the result into theError
@@ -721,7 +741,33 @@ command dbExecuteSQL pSQL, pDatabaseConnectionID
    return theError
 end dbExecuteSQL
 
-
+# This command executes the given SQL script on the default connection or the given connection.
+#
+# *Parameters:* A SQL Statement.
+# *Parameters:* An array of query parameters.
+# *Parameters:* A SQL Statement and a connection id.
+#
+command dbExecute pSQL, pParamA, pDatabaseConnectionID
+   local theError
+   
+   if pDatabaseConnectionID is empty then
+      if dbId is not empty then
+         put dbId into pDatabaseConnectionID
+      else
+         put dbConfigA into pDatabaseConnectionID
+      end if
+   end if
+   
+   if pDatabaseConnectionID is a number then
+      revExecuteSQL pDatabaseConnectionID, pSQL, pParamA
+   else
+      dbRemoteExecuteSQL pDatabaseConnectionID,, pSQL, pParamA
+   end if
+   
+   put the result into theError
+   put empty into dbA
+   return theError
+end dbExecute
 
 # This command sets the limit for the query.
 #
