@@ -6,8 +6,8 @@
  functionality and fix bugs in the main library.
 
  Using this library REQUIRES that you follow the original license agreement. If you intend
- to not open source your code you must purchase a commercial license of the otiginal author
-#at the link provided below.
+ to not open source your code you must purchase a commercial license of the original author
+ at the link provided below.
 
  Release Notes
  
@@ -749,6 +749,9 @@ end dbExecuteSQL
 #
 command dbExecute pSQL, pParamA, pDatabaseConnectionID
    local theError
+   local tParamA
+   
+   put pParamA into tParamA
    
    if pDatabaseConnectionID is empty then
       if dbId is not empty then
@@ -759,9 +762,9 @@ command dbExecute pSQL, pParamA, pDatabaseConnectionID
    end if
    
    if pDatabaseConnectionID is a number then
-      revExecuteSQL pDatabaseConnectionID, pSQL, pParamA
+      revExecuteSQL pDatabaseConnectionID, pSQL, "tParamA"
    else
-      dbRemoteExecuteSQL pDatabaseConnectionID,, pSQL, pParamA
+      dbRemoteExecuteSQL pDatabaseConnectionID,, pSQL, tParamA
    end if
    
    put the result into theError
@@ -1607,3 +1610,4 @@ function  dbRemoteQueryDatabase pDatabaseConnectionA, pTable, pSQL, pPlaceholder
       return tRetValA
    end if
 end dbRemoteQueryDatabase
+
