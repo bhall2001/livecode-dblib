@@ -1371,6 +1371,7 @@ command dbCreateNewSQLiteFile pLocation, pInitialSQL
       
       -- executing SQL
       dbExecuteSQL pInitialSQL, tID
+      revCloseDatabase tID
       dbRestoreQueryParameters tQuery
       return the result
       
@@ -1610,4 +1611,5 @@ function  dbRemoteQueryDatabase pDatabaseConnectionA, pTable, pSQL, pPlaceholder
       return tRetValA
    end if
 end dbRemoteQueryDatabase
+
 
