@@ -1,24 +1,24 @@
 ﻿script "aagDBLib"
 /*
- AAG DB LIB BHALL2001 FORK
+AAG DB LIB BHALL2001 FORK
 
- This file contains a forked version of the original aag dblib. I have made changes to add
- functionality and fix bugs in the main library.
+This file contains a forked version of the original aag dblib. I have made changes to add
+functionality and fix bugs in the main library.
 
- Using this library REQUIRES that you follow the original license agreement. If you intend
- to not open source your code you must purchase a commercial license of the original author
- at the link provided below.
+Using this library REQUIRES that you follow the original license agreement. If you intend
+to not open source your code you must purchase a commercial license of the original author
+at the link provided below.
 
- Release Notes
- 
- Version 20.2.1
- - added local variable declarations
- - fixed bugs with parameters related to remote library
- - merged Brian M. pull request from original repo
- - added dbExecute command
- 
- */
- 
+Release Notes
+
+Version 20.2.1
+- added local variable declarations
+- fixed bugs with parameters related to remote library
+- merged Brian M. pull request from original repo
+- added dbExecute command
+- added overwrite parameter to dbCreateNewSqlFile
+*/
+
 # ## AAG DB LIB
 #
 # Version 4.0
@@ -1339,16 +1339,17 @@ end arrayToPlainText
 #
 # *Parameters:* The full location of the file including the file name and extension.
 # *Parameters:* The full location of the file including the file name and extension and an optional SQL script to run.
+# *Parameters:* overwrite and existing file when set to true
 #
 # If the initial SQL script is given then the result of running it is placed on _the result_. You should also check that
 # variable for errors starting with _dberr_.
 #
-command dbCreateNewSQLiteFile pLocation, pInitialSQL
+command dbCreateNewSQLiteFile pLocation, pInitialSQL, overwrite
    local tQuery
    local tID
    
    -- check if file exists
-   if there is a file pLocation then
+   if (there is a file pLocation) and (overwrite is not true) then
       return "dberr, file already exists"
    end if
    
